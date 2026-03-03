@@ -1,4 +1,6 @@
-﻿using System;
+﻿using UNIDAD_3_ADO.NET.Models;
+using System.Linq;
+using System;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using System.Windows.Forms;
@@ -21,50 +23,38 @@ namespace UNIDAD_3_ADO.NET
 
         private void CargarDatos()
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (var db = new PrimeraactividadContext())
             {
-                string query = "SELECT * FROM clientes";
-                conn.Open();
-                SqlCommand cmd = new SqlCommand(query, conn);
-                SqlDataReader reader = cmd.ExecuteReader();
-
-                DataTable dt = new DataTable();
-                dt.Load(reader);
-
-                dgvClientes.DataSource = dt;
-
+                dgvClientes.DataSource = db.Clientes.ToList();
             }
         }
 
         private void frmclientes_Load(object sender, EventArgs e)
         {
-
+            CargarDatos();
         }
 
         private void btnInsertar_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtNombreCompleto.Text) || string.IsNullOrWhiteSpace(txtCorreoElectronico.Text) ||
-                string.IsNullOrWhiteSpace(txtTelefono.Text) || string.IsNullOrWhiteSpace(txtDireccion.Text))
-            {
-                MessageBox.Show("Por favor, complete todos los campos.", "aviso",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-                return;
-            }
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                string query = "INSERT INTO clientes (nombrecompleto, correoelectronico, telefono, direccion) VALUES (@Nombre, @Correo, @telefono, @direccion)";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@Nombre", txtNombreCompleto.Text);
-                cmd.Parameters.AddWithValue("@Correo", txtCorreoElectronico.Text);
-                cmd.Parameters.AddWithValue("@telefono", txtTelefono.Text);
-                cmd.Parameters.AddWithValue("@direccion", txtDireccion.Text);
+           
 
-                MessageBox.Show("Cliente insertado correctamente.");
-                conn.Open();
-                cmd.ExecuteNonQuery();
-                conn.Close();
+            using (var db = new PrimeraactividadContext())
+            {
+                Cliente nuevo = new Cliente()
+                {
+                    Nombrecompleto = txtNombreCompleto.Text,
+                    CorreoElectronico = txtCorreoElectronico.Text,
+                    Telefono = txtTelefono.Text,
+                    Direccion = txtDireccion.Text,
+
+                };
+
+                db.Clientes.Add(nuevo);
+                db.SaveChanges();
             }
+
+            CargarDatos();
+            MessageBox.Show("Cliente guardado correctamente");
             CargarDatos();
             LimpiarCampos();
         }
@@ -80,26 +70,24 @@ namespace UNIDAD_3_ADO.NET
 
         private void btnActualizar_Click(object sender, EventArgs e)
         {
-            if (idSeleccionado <= 0)
-                return;
+            int id = Convert.ToInt32(dgvClientes.CurrentRow.Cells[0].Value);
 
-
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (var db = new PrimeraactividadContext())
             {
-                string query = "UPDATE clientes SET nombrecompleto=@Nombre, correoelectronico=@Correo, telefono=@telefono, direccion=@direccion WHERE clienteID = @id";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@Nombre", txtNombreCompleto.Text);
-                cmd.Parameters.AddWithValue("@Correo", txtCorreoElectronico.Text);
-                cmd.Parameters.AddWithValue("@telefono", txtTelefono.Text);
-                cmd.Parameters.AddWithValue("@direccion", txtDireccion.Text);
-                cmd.Parameters.AddWithValue("@id", idSeleccionado);
+                var cliente = db.Clientes.Find(id);
 
-                MessageBox.Show("Cliente actualizado correctamente.");
-                conn.Open();
-                cmd.ExecuteNonQuery();
-                conn.Close();
+                if (cliente != null)
+                {
+                    cliente.Nombrecompleto = txtNombreCompleto.Text;
+                    cliente.CorreoElectronico = txtCorreoElectronico.Text;
+                    cliente.Telefono = txtTelefono.Text;
+                    cliente.Direccion = txtDireccion.Text;
+
+                    db.SaveChanges();
+                }
             }
+            CargarDatos();
+            MessageBox.Show("cliente actualizado correctamente");
             CargarDatos();
             LimpiarCampos();
         }
@@ -119,22 +107,21 @@ namespace UNIDAD_3_ADO.NET
 
         private void btnEliminar_Click(object sender, EventArgs e)
         {
-            if (idSeleccionado <= 0)
-                return;
+            int id = Convert.ToInt32(dgvClientes.CurrentRow.Cells[0].Value);
 
-
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (var db = new PrimeraactividadContext())
             {
-                string query = "DELETE FROM clientes WHERE clienteID = @id";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@id", idSeleccionado);
+                var cliente = db.Clientes.Find(id);
 
-                MessageBox.Show("Cliente eliminado correctamente.");
-                conn.Open();
-                cmd.ExecuteNonQuery();
-                conn.Close();
+                if (cliente != null)
+                {
+                    db.Clientes.Remove(cliente);
+                    db.SaveChanges();
+                }
             }
+
+            CargarDatos();
+            MessageBox.Show("cliente eliminado correctamente");
             CargarDatos();
             LimpiarCampos();
         }

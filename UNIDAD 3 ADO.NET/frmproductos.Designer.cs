@@ -42,6 +42,7 @@
             btnInsertar = new Button();
             btnActualizar = new Button();
             btnEliminar = new Button();
+            btnLimpiar = new Button();
             ((System.ComponentModel.ISupportInitialize)dgvProductos).BeginInit();
             SuspendLayout();
             // 
@@ -132,10 +133,11 @@
             // dgvProductos
             // 
             dgvProductos.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvProductos.Location = new Point(29, 171);
+            dgvProductos.Location = new Point(12, 202);
             dgvProductos.Name = "dgvProductos";
+            dgvProductos.ReadOnly = true;
             dgvProductos.RowHeadersWidth = 62;
-            dgvProductos.Size = new Size(759, 275);
+            dgvProductos.Size = new Size(776, 236);
             dgvProductos.TabIndex = 3;
             dgvProductos.CellClick += dgvProductos_CellClick;
             // 
@@ -169,11 +171,22 @@
             btnEliminar.UseVisualStyleBackColor = true;
             btnEliminar.Click += btnEliminar_Click;
             // 
+            // btnLimpiar
+            // 
+            btnLimpiar.Location = new Point(144, 135);
+            btnLimpiar.Name = "btnLimpiar";
+            btnLimpiar.Size = new Size(112, 61);
+            btnLimpiar.TabIndex = 4;
+            btnLimpiar.Text = "limpiar caja de texto";
+            btnLimpiar.UseVisualStyleBackColor = true;
+            btnLimpiar.Click += btnLimpiar_Click;
+            // 
             // frmproductos
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(btnLimpiar);
             Controls.Add(btnEliminar);
             Controls.Add(btnActualizar);
             Controls.Add(btnInsertar);
@@ -212,5 +225,6 @@
         private Button btnInsertar;
         private Button btnActualizar;
         private Button btnEliminar;
+        private Button btnLimpiar;
     }
 }

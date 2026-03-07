@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Data.SqlClient;
+using UNIDAD_3_ADO.NET.Models;
 
 namespace UNIDAD_3_ADO.NET
 {
@@ -17,6 +18,7 @@ namespace UNIDAD_3_ADO.NET
         string connectionString = "Server=localhost;Database=primeraactividad;Trusted_Connection=True;TrustServerCertificate=True;";
         int idSeleccionado = 0;
         int categoriaIDSeleccionada = 0;
+        int ProductoId = 0;
         public frmproductos()
         {
             InitializeComponent();
@@ -27,16 +29,12 @@ namespace UNIDAD_3_ADO.NET
 
         private void CargarProductos()
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (var db = new PrimeraactividadContext())
             {
-                string query = "SELECT * FROM productos";
-                conn.Open();
-                SqlCommand cmd = new SqlCommand(query, conn);
-                SqlDataReader reader = cmd.ExecuteReader();
-                DataTable dt = new DataTable();
-                dt.Load(reader);
-                dgvProductos.DataSource = dt;
+                dgvProductos.DataSource = db.Productos.ToList();
+
             }
+
         }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -61,26 +59,18 @@ namespace UNIDAD_3_ADO.NET
                 return;
             }
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (var db = new PrimeraactividadContext())
             {
-                decimal precio = Convert.ToDecimal(txtPrecio.Text);
-                int stock = Convert.ToInt32(txtStock.Text);
-                int categoriaIDSeleccionada = Convert.ToInt32(cmbCategorias.SelectedValue);
+                Producto p = new Producto();
 
-                string query = @"INSERT INTO Productos
-                        (nombreproducto, descripcion, precio, stock, categoriaID)
-                        VALUES (@Nombre, @Descripcion, @Precio, @Stock, @Id)";
+                p.Nombreproducto = txtNombreProducto.Text;
+                p.Descripcion = txtDescripcion.Text;
+                p.Precio = Convert.ToDecimal(txtPrecio.Text);
+                p.Stock = Convert.ToInt32(txtStock.Text);
+                p.CategoriaId = Convert.ToInt32(cmbCategorias.SelectedValue);
 
-                SqlCommand cmd = new SqlCommand(query, conn);
-
-                cmd.Parameters.AddWithValue("@Nombre", txtNombreProducto.Text);
-                cmd.Parameters.AddWithValue("@Descripcion", txtDescripcion.Text);
-                cmd.Parameters.AddWithValue("@Precio", precio);
-                cmd.Parameters.AddWithValue("@Stock", stock);
-                cmd.Parameters.AddWithValue("@Id", categoriaIDSeleccionada);
-
-                conn.Open();
-                cmd.ExecuteNonQuery();
+                db.Productos.Add(p);
+                db.SaveChanges();
             }
 
             MessageBox.Show("Producto insertado correctamente.");
@@ -89,19 +79,11 @@ namespace UNIDAD_3_ADO.NET
         }
         private void CargarCategoriasCombo()
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (var db = new PrimeraactividadContext())
             {
-                string query = "SELECT categoriaID, nombrecategoria FROM categorias";
-
-                SqlCommand cmd = new SqlCommand(query, conn);
-                conn.Open();
-
-                DataTable dt = new DataTable();
-                dt.Load(cmd.ExecuteReader());
-
-                cmbCategorias.DataSource = dt;
-                cmbCategorias.DisplayMember = "nombrecategoria";
-                cmbCategorias.ValueMember = "categoriaID";
+                cmbCategorias.DataSource = db.Categorias.ToList();
+                cmbCategorias.DisplayMember = "Nombrecategoria";
+                cmbCategorias.ValueMember = "CategoriaId";
             }
         }
 
@@ -117,97 +99,72 @@ namespace UNIDAD_3_ADO.NET
         private void frmproductos_Load(object sender, EventArgs e)
         {
             CargarCategoriasCombo();
+            CargarProductos();
         }
 
         private void dgvProductos_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-
-
             if (dgvProductos.CurrentRow != null)
             {
-                productoSeleccionado = Convert.ToInt32(
-                    dgvProductos.CurrentRow.Cells["productoID"].Value);
+                ProductoId = Convert.ToInt32(dgvProductos.CurrentRow.Cells["ProductoId"].Value);
 
-                txtNombreProducto.Text =
-                    dgvProductos.CurrentRow.Cells["nombreproducto"].Value.ToString();
+                txtNombreProducto.Text = dgvProductos.CurrentRow.Cells["Nombreproducto"].Value.ToString();
+                txtDescripcion.Text = dgvProductos.CurrentRow.Cells["Descripcion"].Value.ToString();
+                txtPrecio.Text = dgvProductos.CurrentRow.Cells["Precio"].Value.ToString();
+                txtStock.Text = dgvProductos.CurrentRow.Cells["Stock"].Value.ToString();
 
-                txtDescripcion.Text =
-                    dgvProductos.CurrentRow.Cells["descripcion"].Value.ToString();
-
-                txtPrecio.Text =
-                    dgvProductos.CurrentRow.Cells["precio"].Value.ToString();
-
-                txtStock.Text =
-                    dgvProductos.CurrentRow.Cells["stock"].Value.ToString();
-
-                cmbCategorias.SelectedValue =
-                    dgvProductos.CurrentRow.Cells["categoriaID"].Value;
+                cmbCategorias.SelectedValue = dgvProductos.CurrentRow.Cells["CategoriaId"].Value;
             }
         }
 
         private void btnActualizar_Click(object sender, EventArgs e)
         {
-            if (productoSeleccionado <= 0)
-                {
-                    MessageBox.Show("Por favor, seleccione un producto para actualizar.", "aviso",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning);
-                    return;
-            }
+           
+            
 
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (var db = new PrimeraactividadContext())
             {
-                string query = @"UPDATE productos
-                         SET nombreproducto = @Nombre,
-                             descripcion = @Descripcion,
-                             precio = @Precio,
-                             stock = @Stock,
-                             categoriaID = @CategoriaID
-                         WHERE productoID = @Id";
+                var producto = db.Productos.Find(ProductoId);
 
-                SqlCommand cmd = new SqlCommand(query, conn);
+                producto.Nombreproducto = txtNombreProducto.Text;
+                producto.Descripcion = txtDescripcion.Text;
+                producto.Precio = Convert.ToDecimal(txtPrecio.Text);
+                producto.Stock = Convert.ToInt32(txtStock.Text);
+                producto.CategoriaId = Convert.ToInt32(cmbCategorias.SelectedValue);
 
-                cmd.Parameters.AddWithValue("@Nombre", txtNombreProducto.Text);
-                cmd.Parameters.AddWithValue("@Descripcion", txtDescripcion.Text);
-                cmd.Parameters.AddWithValue("@Precio", Convert.ToDecimal(txtPrecio.Text));
-                cmd.Parameters.AddWithValue("@Stock", Convert.ToInt32(txtStock.Text));
-                cmd.Parameters.AddWithValue("@CategoriaID",
-                                            Convert.ToInt32(cmbCategorias.SelectedValue));
-                cmd.Parameters.AddWithValue("@Id", productoSeleccionado);
-
-                conn.Open();
-                cmd.ExecuteNonQuery();
+                db.SaveChanges();
             }
 
-            MessageBox.Show("Producto actualizado correctamente.");
+            MessageBox.Show("Producto actualizado");
             CargarProductos();
             LimpiarCampos();
         }
 
         private void btnEliminar_Click(object sender, EventArgs e)
         {
-            if (productoSeleccionado <= 0)
-            {
-                MessageBox.Show("Por favor, seleccione un producto para eliminar.", "aviso",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-                return;
-            }
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                string query = "DELETE FROM productos WHERE productoID = @Id";
+            
 
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@Id", productoSeleccionado);
+            using (var db = new PrimeraactividadContext())
+            {
+                var producto = db.Productos.Find(ProductoId);
 
-                conn.Open();
-                cmd.ExecuteNonQuery();
+                db.Productos.Remove(producto);
+                db.SaveChanges();
             }
 
-            MessageBox.Show("Producto eliminado correctamente.");
+            MessageBox.Show("Producto eliminado");
             CargarProductos();
             LimpiarCampos();
+
+        }
+
+        private void btnLimpiar_Click(object sender, EventArgs e)
+        {
+            txtNombreProducto.Clear();
+            txtDescripcion.Clear();
+            txtPrecio.Clear();
+            txtStock.Clear();
+
         }
     }
 
